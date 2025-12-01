@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>De Pest 1349 – Escape Room</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="img/1349.png">
+</head>
+<body>
+
+<div class="container">
+
+    <!-- STARTSCHERM -->
+    <div id="start">
+        <h1>1349</h1>
+        <h1>Escape Room</h1>
+        <input type="text" id="teamnaam" placeholder="Teamnaam" maxlength="20" autofocus>
+        <button id="startknop">Start de ontsnapping</button>
+        <div style="margin-top: 30px; font-size: 1.1em;">
+            <a href="scoreboard.html" target="_blank" class="subtielelink">Scorebord bekijken</a> • 
+            <a href="https://www.youtube.com/watch?v=sYEl20XYpTs&autoplay=1&list=RDsYEl20XYpTs&start_radio=1" target="_blank" class="subtielelink">
+                Muziek starten
+            </a>
+        </div>
+    </div>
+
+    <!-- SPELSCHERM -->
+    <div id="spel" class="hidden">
+        <div class="header">
+            <div>Tijd: <span id="timer">60:00</span></div>
+            <div>Fase <span id="fase">1</span>/3</div>
+            <div>Team: <span id="teamweergave"></span></div>
+        </div>
+
+        <h2>Het Huis</h2>
+
+        <div style="margin: 30px 0;">
+            <input type="text" id="code" maxlength="4" placeholder="XXXX" autocomplete="off">
+            <button id="check">Controleren</button>
+        </div>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

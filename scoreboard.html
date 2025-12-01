@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scorebord – De Pest 1349</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="img/1349.png">
+    <style>
+        body { background:#0a0502; }
+        h1 { font-size: 4.5em; color:#b8860b; text-shadow: 0 0 30px #420; }
+    </style>
+</head>
+<body>
+
+<div class="container" style="text-align:center;">
+    <h1>Scorebord</h1>
+
+    <div id="lijst" style="
+        font-size:3.2em;
+        line-height:1.8em;
+        max-width:800px;
+        margin:60px auto;
+        padding:30px;
+        background:rgba(20,0,0,0.6);
+        border:3px double #8b6914;
+        border-radius:15px;
+        color:#ffeb3b;
+    ">
+        Laden...
+    </div>
+
+    <br><br>
+    <a href="index.html" class="subtielelink">← Terug naar start</a>
+</div>
+
+<script>
+// Live scorebord – ververst elke seconde
+setInterval(() => {
+    const sb = JSON.parse(localStorage.getItem("pest1349_sb") || "[]");
+    
+    if (sb.length === 0) {
+        document.getElementById("lijst").innerHTML = "<em style='color:#8b6914;font-size:0.9em'>Nog geen teams voltooid...</em>";
+        return;
+    }
+
+    // Sorteer op tijd (beste eerst)
+    sb.sort((a,b) => a.tijd - b.tijd);
+
+    document.getElementById("lijst").innerHTML = sb
+        .map((s, i) => `
+            <div style="margin:15px 0; padding:10px; background:${i===0?'rgba(255,215,0,0.2)':''}; border-radius:10px;">
+                ${i+1}. <strong style="color:#ffd700;">${s.team}</strong> 
+                – <span style="color:#ffeb3b;">${Math.floor(s.tijd/60)}:${String(s.tijd%60).padStart(2,"0")}</span>
+            </div>
+        `).join("");
+}, 1000);
+</script>
+
+</body>
+</html>
