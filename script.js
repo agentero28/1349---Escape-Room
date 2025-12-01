@@ -1,137 +1,205 @@
-* { margin:0; padding:0; box-sizing:border-box; }
+const codes = ["2348", "3587", "9521"];
 
-body {
-    background:#000;
-    color:#b89f73;
-    font-family:"Cinzel", Georgia, serif;
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background-image:
-        radial-gradient(circle at 50% 50%, #111 0%, #000 70%),
-        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23000"/><circle cx="50" cy="50" r="2" fill="%23221100"/></svg>');
-    background-size:cover;
-    padding:10px;
+// Reset bij nieuw spel
+if (!location.pathname.includes("fase")) {
+    localStorage.removeItem("tijd");
+    localStorage.removeItem("team");
 }
 
-.container {
-    max-width:960px;
-    width:100%;
-    padding:30px 20px;
-    background:rgba(10,5,2,0.95);
-    border:6px double #5c3a00;
-    border-radius:16px;
-    box-shadow:0 0 40px rgba(100,30,0,0.8);
-    text-align:center;
-    position:relative;
-    overflow:hidden;
+let tijd = parseInt(localStorage.getItem("tijd")) || 3600;
+let team = localStorage.getItem("team") || "";
+const huidigeFase = location.pathname.includes("fase3") ? 2 : location.pathname.includes("fase2") ? 1 : 0;
+
+// Achtergrond + overlay
+const achtergronden = ["img/kamer.jpeg", "img/kaart.jpeg", "img/poortwachter.jpg"];
+document.body.style.cssText = `background:url('${achtergronden[huidigeFase]}') center/cover no-repeat fixed !important;background-blend-mode:multiply;`;
+
+const overlay = document.createElement("div");
+overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);pointer-events:none;z-index:-1;";
+document.body.appendChild(overlay);
+
+// Timer weergeven
+function updateTimer() {
+    let m, s;
+    if (tijd >= 0) {
+        m = String(Math.floor(tijd / 60)).padStart(2, "0");
+        s = String(tijd % 60).padStart(2, "0");
+    } else {
+        const neg = Math.abs(tijd);
+        m = "-" + String(Math.floor(neg / 60)).padStart(2, "0");
+        s = String(neg % 60).padStart(2, "0");
+    }
+    const el = document.getElementById("timer");
+    if (el) el.textContent = m + ":" + s;
 }
 
-.container::before {
-    content:"";
-    position:absolute;
-    inset:0;
-    background:linear-gradient(transparent 30%, rgba(80,20,0,0.3) 100%);
-    pointer-events:none;
+// Start timer + tipsysteem
+function startTimer() {
+    clearInterval(window.timerInterval);
+    updateTimer();
+
+    const alleTips = [
+        ["De volgorde in de tekst is belangerijk", "Gebruik de puzzelstukken om de tafel te decoderen", "Oplossing sudoku: 2", "De code is 2348"],
+        ["Zoek de verschillen", "Morsecode op het kerkgebouw", "Volgorde route op de kaart", "De code is 3587"],
+        ["Kijk in de torens", "De poortwachter komt na de torens"]
+    ];
+    const tips = alleTips[huidigeFase];
+    let tipIndex = 0;
+
+    const tipContainer = document.createElement("div");
+    tipContainer.style.cssText = "position:fixed;top:15px;right:15px;z-index:9999;width:340px;background:rgba(20,0,0,0.9);padding:18px;font-size:1.4em;border:3px double #8b6914;border-radius:14px;box-shadow:0 0 35px #300;color:#ffeb3b;line-height:1.7em;";
+    tipContainer.innerHTML = "<strong>Beschikbare tips:</strong>";
+    document.body.appendChild(tipContainer);
+
+    const gebruikteLijst = document.createElement("div");
+    gebruikteLijst.style.cssText = "position:fixed;bottom:25px;left:25px;z-index:9998;width:320px;font-size:1.4em;background:rgba(0,0,0,0.9);color:#ffeb3b;padding:14px;border:3px double #8b6914;border-radius:12px;line-height:1.7em;";
+    gebruikteLijst.innerHTML = "<strong>Gebruikte tips:</strong><br><em>Nog geen</em>";
+    document.body.appendChild(gebruikteLijst);
+
+    const voegTipKnopToe = (i) => {
+        const isAntwoord = (huidigeFase < 2 && i === 3);
+        const knop = document.createElement("button");
+        knop.textContent = isAntwoord ? "ANTWOORD (−30 sec)" : `Tip ${i+1}/${tips.length} (−30 sec)`;
+        knop.style.cssText = `display:block;width:100%;margin:12px 0;padding:14px;font-size:1.1em;font-weight:bold;border-radius:10px;cursor:pointer;background:${isAntwoord?"#004400":"#440000"};color:${isAntwoord?"#00ff00":"#ff9999"};border:3px solid ${isAntwoord?"#00ff00":"#ff6666"};box-shadow:0 0 15px ${isAntwoord?"#0f0":"#800"};`;
+        knop.onclick = () => {
+            tijd = Math.max(0, tijd - 30);
+            localStorage.setItem("tijd", tijd);
+            updateTimer();
+            let html = gebruikteLijst.innerHTML;
+            if (html.includes("Nog geen")) html = "<strong>Gebruikte tips:</strong><br>";
+            gebruikteLijst.innerHTML = html + `• ${tips[i]}<br>`;
+            knop.remove();
+        };
+        tipContainer.appendChild(knop);
+    };
+
+    let verstrekenStart = 3600 - tijd;
+    const eersteTipNa = Math.ceil((verstrekenStart + 1) / 300) * 300;
+
+    window.timerInterval = setInterval(() => {
+        tijd--;
+        localStorage.setItem("tijd", tijd);
+        updateTimer();
+        const verstreken = 3600 - tijd;
+        if (verstreken >= eersteTipNa + (tipIndex * 300) && tipIndex < tips.length) {
+            voegTipKnopToe(tipIndex++);
+        }
+        if (tijd <= 0) eindig(false);
+    }, 1000);
 }
 
-/* === TEKSTGROOTTE RESPONSIVE === */
-h1 { font-size: clamp(2.8em, 10vw, 5em); color:#a0522d; text-shadow:0 0 20px #400000; letter-spacing:3px; margin:15px 0; }
-h2 { font-size: clamp(2.2em, 8vw, 3.2em); color:#b87333; margin:30px 0 15px; text-shadow:0 0 10px #300000; }
+// Code controleren
+document.getElementById("check")?.addEventListener("click", () => {
+    const invoer = (document.getElementById("code")?.value || "").replace(/\D/g, "").slice(0,4);
+    if (invoer === codes[huidigeFase]) {
+        localStorage.setItem("tijd", tijd);
+        if (huidigeFase === 2) eindig(true);
+        else location.href = huidigeFase === 0 ? "fase2.html" : "fase3.html";
+    } else {
+        alert("Verkeerde code – 30 seconden straf!");
+        tijd = Math.max(0, tijd - 30);
+        updateTimer();
+    }
+});
+document.getElementById("code")?.addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g,""));
 
-/* === INPUT & KNOPPEN === */
-input, button {
-    padding:16px 24px;
-    margin:12px 8px;
-    font-size: clamp(1.8em, 6vw, 2.4em);
-    background:#0f0803;
-    color:#ffeb3b;
-    border:4px double #8b6914;
-    border-radius:10px;
-    font-family:inherit;
-    width: calc(100% - 16px);
-    max-width:420px;
+// Startknop fase 1
+if (document.getElementById("startknop")) {
+    document.getElementById("startknop").onclick = () => {
+        team = document.getElementById("teamnaam").value.trim() || "Team X";
+        localStorage.setItem("team", team);
+        document.getElementById("start").style.display = "none";
+        document.getElementById("spel").classList.remove("hidden");
+        document.getElementById("teamweergave").textContent = team;
+        startTimer();
+    };
 }
 
-button {
-    cursor:pointer;
-    background:#331100;
-    transition:all 0.4s;
-}
-button:hover, button:active {
-    background:#8b6914;
-    color:#000;
-    box-shadow:0 0 20px rgba(139,105,20,0.8);
+// Direct starten in fase 2/3
+if (location.pathname.includes("fase")) {
+    document.getElementById("teamweergave").textContent = team;
+    startTimer();
 }
 
-.hidden { display:none; }
+// Eindscherm
+function eindig(win) {
+    clearInterval(window.timerInterval);
+    localStorage.removeItem("tijd");
 
-/* === HEADER (timer, fase, team) === */
-.header {
-    padding:12px 16px;
-    background:rgba(15,8,3,0.95);
-    border-bottom:5px double #5c3a00;
-    font-size: clamp(1.4em, 4.5vw, 2.2em);
-    margin-bottom:30px;
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:space-between;
-    gap:10px;
-    color:#d4af37;
-    text-shadow:0 0 10px #400;
-    border-radius:10px;
+    const verstreken = 3600 - tijd;
+    let sb = JSON.parse(localStorage.getItem("pest1349_sb") || "[]");
+
+    if (!sb.some(s => s.team === team)) sb.push({team, tijd: verstreken});
+    vasteTeams.forEach(vt => { if (!sb.some(s => s.team === vt.team)) sb.push(vt); });
+
+    sb.sort((a,b) => a.tijd - b.tijd);
+    localStorage.setItem("pest1349_sb", JSON.stringify(sb));
+
+    const lijst = sb.map((s,i) => 
+        `<div style="font-size:2.5em;margin:15px;padding:20px;background:${s.team===team?'rgba(0,255,0,0.4)':'rgba(139,105,20,0.2)'};border-radius:12px;">
+            ${i+1}. <strong>${s.team}</strong> – ${Math.floor(s.tijd/60)}:${String(s.tijd%60).padStart(2,"0")}
+        </div>`).join("");
+
+    document.body.innerHTML = `
+    <div class="container" style="text-align:center;">
+        <h1 style="font-size:6em;color:${win?'#b8860b':'#ff3333'};text-shadow:0 0 30px ${win?'#ff6600':'#ff0000'}">
+            ${win?"ONTSNAPT!":"TIJD OP"}
+        </h1>
+        ${win ? `
+        <div style="font-size:2.2em;line-height:1.6em;max-width:800px;margin:50px auto;padding:30px;background:rgba(20,10,0,0.7);border:3px double #8b6914;border-radius:15px;color:#d4af37;">
+            <strong>Proficiat!!!</strong><br><br>
+            Jullie hebben het gezin Ketteler kunnen helpen om weg te komen uit de stad!<br><br>
+            Ze staan nog steeds voor een hele hoop uitdagingen… Zo moeten ze nu op zoek naar een plek waar ze een nieuw leven kunnen beginnen en dat is niet zo makkelijk als ze de pest willen blijven ontwijken.<br><br>
+            Maar dat is een verhaal voor een andere keer ;)
+        </div>` : `
+        <div style="font-size:2.1em;line-height:1.6em;max-width:800px;margin:50px auto;padding:30px;background:rgba(80,0,0,0.7);border:3px double #880000;border-radius:15px;color:#ff6666;">
+            <strong>Oh nee!</strong><br><br>
+            Jullie waren net niet snel genoeg!<br>
+            De Baljuw had het plan door… Hij heeft het gezin betrapt en stuurt hen terug naar het huisje.<br><br>
+            De tijd is echt op – probeer het opnieuw en wees sneller!
+        </div>`}
+        <p style="font-size:3.5em;margin:40px"><strong>${team}</strong><br>${Math.floor(verstreken/60)}:${String(verstreken%60).padStart(2,"0")}</p>
+        <h2 style="font-size:3em;margin:60px 0">Scorebord</h2>
+        <div style="max-width:700px;margin:0 auto">${lijst}</div>
+        <button onclick="location.href='index.html'" style="font-size:2.8em;padding:30px 100px;margin:50px;background:#440000;color:#ffeb3b;border:4px double #8b6914;border-radius:15px;cursor:pointer;box-shadow:0 0 30px #800;">
+            Opnieuw proberen
+        </button>
+    </div>`;
 }
 
-#timer {
-    color:#ff2222;
-    font-weight:bold;
-    text-shadow:0 0 15px #f00;
-    font-size:1.3em;
+// Vaste teams
+const vasteTeams = [{team: "De Grotmensen", tijd: 46*60 + 12}];
+
+// Eenmalig vaste teams toevoegen
+if (localStorage.getItem("pest1349_sb_fixed") !== "ja") {
+    let sb = JSON.parse(localStorage.getItem("pest1349_sb") || "[]");
+    vasteTeams.forEach(vt => { if (!sb.some(s => s.team === vt.team)) sb.push(vt); });
+    sb.sort((a,b) => a.tijd - b.tijd);
+    localStorage.setItem("pest1349_sb", JSON.stringify(sb));
+    localStorage.setItem("pest1349_sb_fixed", "ja");
 }
 
-/* === CODE VELD === */
-#code {
-    width:90%;
-    max-width:400px;
-    height:110px;
-    font-size: clamp(2.4em, 9vw, 3.2em);
-    letter-spacing:0.6em;
-    padding-left:0.8em;
-    background:#000;
-    color:#ffeb3b;
-    border:6px double #8b6914;
-    text-align:center;
-    line-height:110px;
-    text-shadow:0 0 15px #ff0;
-    margin:20px auto;
-    display:block;
-}
+// Testknop: 3× snel op timer klikken → 5 seconden
+let klikCount = 0;
+document.getElementById("timer")?.addEventListener("click", () => {
+    klikCount++;
+    if (klikCount === 3) {
+        tijd = 5;
+        localStorage.setItem("tijd", tijd);
+        updateTimer();
+        alert("⏰ TEST: tijd op 5 seconden gezet!");
+        klikCount = 0;
+    }
+    setTimeout(() => klikCount = 0, 2000);
+});
 
-/* === TIPS & GEBRUIKTE LIJST === */
-tipContainer, gebruikteLijst { font-size: clamp(1em, 3.5vw, 1.4em); }
-
-/* === SUBTIELE LINKS === */
-.subtielelink {
-    color:#8b6914;
-    font-size: clamp(1.1em, 3.8vw, 1.4em);
-    text-decoration:underline;
-    opacity:0.7;
-    margin:20px 10px;
-    display:inline-block;
-    transition:all 0.4s;
-}
-.subtielelink:hover { opacity:1; color:#d4af37; text-shadow:0 0 10px #830; }
-
-/* === EINDSCHERM KNOP === */
-button[onclick*="index.html"] {
-    font-size: clamp(2em, 7vw, 2.8em);
-    padding:20px 60px !important;
-}
-
-/* Extra: zorg dat alles mooi past op kleine schermen */
-@media (max-width: 480px) {
-    .container { padding:20px 15px; }
-    .header { font-size:1.3em; padding:10px; }
-    input, button { padding:14px 20px; margin:10px 0; }
+// Wis alleen test-teams (?clear-test)
+if (location.search.includes("clear-test")) {
+    if (confirm("Alle test-teams verwijderen? Vaste teams blijven staan.")) {
+        let sb = JSON.parse(localStorage.getItem("pest1349_sb") || "[]");
+        sb = sb.filter(s => vasteTeams.some(vt => vt.team === s.team));
+        localStorage.setItem("pest1349_sb", JSON.stringify(sb));
+        alert("✅ Test-teams verwijderd!");
+        location.href = location.pathname;
+    }
 }
