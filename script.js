@@ -167,13 +167,22 @@ function eindig(win) {
     </div>`;
 }
 
-// Vaste teams
-const vasteTeams = [{team: "De Grotmensen", tijd: 46*60 + 12}];
+// === VASTE TEAMS – VOEG HIER ALLE TOPSCORES TOE ===
+const vasteTeams = [
+    {team: "De Grotmensen", tijd: 46*60 + 12}, // 
+    {team: "Nesskyl", tijd: 49*60 + 30}, // 
+    {team: "5SQN", tijd: 29*60 + 18},  // 
+    {team: "Grues", tijd: 34*60 + 53}, // 
+];
 
-// Eenmalig vaste teams toevoegen
+// Eenmalig toevoegen aan scoreboard (werkt op elke computer)
 if (localStorage.getItem("pest1349_sb_fixed") !== "ja") {
     let sb = JSON.parse(localStorage.getItem("pest1349_sb") || "[]");
-    vasteTeams.forEach(vt => { if (!sb.some(s => s.team === vt.team)) sb.push(vt); });
+    vasteTeams.forEach(vt => {
+        if (!sb.some(s => s.team === vt.team)) {
+            sb.push(vt);
+        }
+    });
     sb.sort((a,b) => a.tijd - b.tijd);
     localStorage.setItem("pest1349_sb", JSON.stringify(sb));
     localStorage.setItem("pest1349_sb_fixed", "ja");
