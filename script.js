@@ -172,21 +172,20 @@ const vasteTeams = [
     {team: "De Grotmensen", tijd: 46*60 + 12}, // 
     {team: "Nesskyl", tijd: 49*60 + 30}, // 
     {team: "5SQN", tijd: 29*60 + 18},  // 
-    {team: "Grues", tijd: 34*60 + 53}, // 
+    {team: "Grues", tijd: 34*60 + 53},
+    {team: "Ianne", tijd: 32*60 + 33},
+    {team: "Panachekes", tijd: 48*60 + 2}, // 
 ];
 
-// Eenmalig toevoegen aan scoreboard (werkt op elke computer)
-if (localStorage.getItem("pest1349_sb_fixed") !== "ja") {
-    let sb = JSON.parse(localStorage.getItem("pest1349_sb") || "[]");
-    vasteTeams.forEach(vt => {
-        if (!sb.some(s => s.team === vt.team)) {
-            sb.push(vt);
-        }
-    });
-    sb.sort((a,b) => a.tijd - b.tijd);
-    localStorage.setItem("pest1349_sb", JSON.stringify(sb));
-    localStorage.setItem("pest1349_sb_fixed", "ja");
-}
+// Altijd toevoegen (ook als je de array wijzigt)
+let sb = JSON.parse(localStorage.getItem("pest1349_sb") || "[]");
+vasteTeams.forEach(vt => {
+    if (!sb.some(s => s.team === vt.team)) {
+        sb.push(vt);
+    }
+});
+sb.sort((a,b) => a.tijd - b.tijd);
+localStorage.setItem("pest1349_sb", JSON.stringify(sb));
 
 // Testknop: 3× snel op timer klikken → 5 seconden
 let klikCount = 0;
